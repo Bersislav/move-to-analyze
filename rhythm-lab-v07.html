@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Move to Analyze | Rhythm Lab 0.7</title>
+<style>
+:root{color-scheme:dark;--bg:#061725;--panel:#112b3b;--panel2:#193b4c;--text:#eaf8ff;--muted:#abc4d2;--line:#335366;--mint:#55e3c8;--orange:#ffa970;--bad:#ff8585}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);padding:0 14px 55px;max-width:980px;margin-inline:auto}
+header{padding:22px 3px 11px}h1{font-size:25px;line-height:1.1;margin:0 0 7px}h2{font-size:19px;margin:0 0 13px}h3{font-size:15px;margin:14px 0 7px}.eyebrow{letter-spacing:.15em;color:var(--mint);font-size:11px;font-weight:800}.muted{color:var(--muted);font-size:13px}p{margin:8px 0 12px}section{padding:16px;margin:13px 0;background:var(--panel);border:1px solid var(--line);border-radius:17px}button{border:0;background:var(--mint);color:#08242c;border-radius:11px;padding:10px 13px;font:inherit;font-weight:750;cursor:pointer;min-height:42px}button.secondary{background:#294b5e;color:var(--text)}button.warn{background:#50383d;color:#ffd1d4}button:disabled{opacity:.43;cursor:not-allowed}button.small{min-height:34px;padding:5px 9px;font-size:12px}button.active{outline:2px solid #fff}label{font-size:13px;color:var(--muted);display:inline-flex;align-items:center;gap:6px;margin:4px 7px 4px 0;flex-wrap:wrap}select,input[type=number]{color:var(--text);background:#203c50;border:1px solid #668092;border-radius:8px;padding:8px;max-width:115px;font:inherit}input[type=file]{max-width:100%;font:inherit}input[type=range]{width:100%;accent-color:var(--mint)}.flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.topline{display:flex;align-items:center;justify-content:space-between;gap:10px}.chip{display:inline-block;background:#204657;border-radius:6px;padding:3px 7px;color:#9be7db;font-size:11px}.media{position:relative;background:#030a12;border-radius:10px;overflow:hidden;max-width:100%}.media video{display:block;width:100%;max-height:60vh;object-fit:contain}.media canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.times{font-variant-numeric:tabular-nums}.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.stat{background:var(--panel2);padding:11px;border-radius:10px}.stat b{display:block;font-size:21px;font-variant-numeric:tabular-nums}.stat span{font-size:12px;color:var(--muted)}.note{background:#173449;border-left:3px solid var(--mint);padding:11px 12px;border-radius:5px;font-size:13px;color:var(--muted)}.caution{border-left-color:var(--orange)}.plot{width:100%;height:245px;background:#081f30;border-radius:10px;border:1px solid var(--line)}.list{max-height:390px;overflow:auto}table{border-collapse:collapse;width:100%;font-size:12px}th,td{text-align:left;padding:7px;border-bottom:1px solid var(--line)}th{color:var(--muted);position:sticky;top:0;background:var(--panel)}.status{padding:11px;background:#082130;border:1px solid var(--line);border-radius:8px;margin:10px 0;white-space:pre-line;font-size:13px}.bar{height:7px;background:#2e5264;border-radius:7px;overflow:hidden}.bar>div{height:100%;background:var(--mint);width:0%}.separator{height:1px;background:var(--line);margin:15px 0}.sr{font-size:12px}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted)}.dot{display:inline-block;width:9px;height:9px;border-radius:10px;background:var(--mint)}.dot.orange{background:var(--orange)}.dot.red{background:var(--bad)}
+</style>
+</head><body>
+<header><div class="eyebrow">MOVE TO ANALYZE · EXPERIMENTAL COMPUTER VISION</div><h1>Rhythm Lab <span style="color:var(--mint)">0.7</span></h1><p class="muted">Брасс · 25 + 25 м · чистое время с первого движения, отдельный отрыв ног, реакция только при наличии сигнала. Экспериментальный анализ ритма и позы. Видео остаётся на устройстве.</p></header>
+<section>
+ <div class="topline"><h2>1. Видео</h2><span class="chip">iPhone / Safari</span></div>
+ <input id="videoFile" type="file" accept="video/*"><p class="muted" id="videoMsg">Выбери исходный файл без замедления</p>
+ <div class="media" id="media"><video id="video" playsinline controls preload="metadata"></video><canvas id="overlay"></canvas></div>
+ <div class="topline" style="margin-top:10px"><span class="times">⏱ <b id="clock">0.000</b> с</span><span class="muted" id="duration">—</span></div>
+ <input type="range" id="seek" min="0" max="1000" step="1" value="0">
+ <div class="flex"><button class="secondary" id="prev">−1 кадр*</button><button class="secondary" id="next">+1 кадр*</button><button class="secondary" id="slow">0.25×</button><label>FPS <select id="fps"><option value="29.97">≈30</option><option value="60">60</option><option value="120">120</option></select></label></div>
+ <p class="muted">* Safari не гарантирует точное покадровое декодирование. При разметке учитывай реальное время на шкале.</p>
+ <div class="note" style="margin:11px 0"><b>Быстрый секундомер — отмечай события прямо у видео:</b><div class="flex" style="margin-top:8px">
+ <button class="secondary small" data-quickmark="motion_start">▶ Первое движение</button>
+ <button class="secondary small" data-quickmark="toe_off">🦶 Отрыв ног</button>
+ <button class="secondary small" data-quickmark="turn_touch">↪ Касание 25 м</button>
+ <button class="secondary small" data-quickmark="finish">🏁 Касание 50 м</button>
+ <button class="secondary small" data-quickmark="start_signal">📣 Сигнал (если был)</button>
+ </div><p class="muted" style="margin-bottom:0">Отметка ставится на текущем кадре. Повторное нажатие для того же события заменяет прежнюю отметку. <b>Чистое время</b> начинается с первого видимого движения, не с отрыва ног.</p></div>
+ <div class="topline"><span class="muted">Чистый секундомер на текущем кадре</span><b class="times" id="liveClean">—</b></div>
+</section>
+<section>
+<h2>2. Автоматический ритм брасса — без сервера</h2>
+<p class="muted">Алгоритм ищет пики видимой кожи рядом с водой. На этом тестовом видео они часто соответствуют подъёму корпуса для вдоха. <b>Это кандидаты дыхательной фазы, а не проверенное число гребков.</b> Работает без нейросети и интернета.</p>
+<div class="flex"><label>1-й отрезок: <input type="number" min="0" step="0.1" id="colorFrom1" value="11" style="width:70px">–<input type="number" min="0" step="0.1" id="colorTo1" value="16.5" style="width:70px"> с</label></div>
+<div class="flex"><label>2-й отрезок: <input type="number" min="0" step="0.1" id="colorFrom2" value="26" style="width:70px">–<input type="number" min="0" step="0.1" id="colorTo2" value="36.5" style="width:70px"> с</label></div>
+<div class="flex"><label>Кадров в секунду <select id="colorFPS"><option value="10">10</option><option value="8">8</option><option value="5">5</option></select></label><label>Чувствительность <select id="colorProm"><option value="12">Нормальная</option><option value="25">Строгая</option><option value="7">Высокая</option></select></label></div>
+<details style="margin:9px 0"><summary style="color:var(--muted)">Настройка области бассейна (для другого ракурса)</summary><p class="muted">Прямоугольник в процентах кадра. Должен покрывать пловца и как можно меньше бортика и зрителей. По умолчанию подобран под видео этого теста.</p><div class="flex"><label>X слева <input id="roiX1" type="number" min="0" max="100" value="26" style="width:60px">%</label><label>X справа <input id="roiX2" type="number" min="0" max="100" value="97" style="width:60px">%</label><label>Y сверху <input id="roiY1" type="number" min="0" max="100" value="34" style="width:60px">%</label><label>Y снизу <input id="roiY2" type="number" min="0" max="100" value="83" style="width:60px">%</label></div></details>
+<div class="flex"><button id="colorAnalyze">Найти пики подъёма корпуса</button><button class="secondary" id="colorCancel" disabled>Остановить</button></div>
+<div id="colorStatus" class="status" role="status">Локальный детектор ещё не запускался.</div><div class="bar"><div id="colorProgress"></div></div>
+<div class="stats" style="margin-top:10px"><div class="stat"><b id="breathCount">—</b><span>Непроверенных кандидатов в выбранных окнах</span></div><div class="stat"><b id="breathQuality">—</b><span>Совпадение с визуальными ориентирами на этом видео (±0,35 с)</span></div><div class="stat"><b id="autoRate1">—</b><span>Примерный темп по кандидатам 1-го участка</span></div><div class="stat"><b id="autoRate2">—</b><span>Примерный темп по кандидатам 2-го участка</span></div></div>
+<h3>Распознанные пики изображения</h3><canvas id="breathPlot" class="plot" width="920" height="255"></canvas>
+<p class="muted">Оценка 9/10 получена предварительно отдельным Python-экспериментом на <b>том же видео и выбранных вручную участках</b>. Она не доказывает точность на других видео или даже на всей дистанции. Браузерный результат может отличаться.</p>
+<div id="breathRows" class="list"></div>
+<button class="secondary" id="breathExport">Скачать локальный сигнал CSV</button>
+</section>
+<section>
+ <h2>3. Анализ позы — эксперимент</h2>
+ <p class="muted">Исправлена загрузка MediaPipe: приложение пробует несколько независимых источников библиотеки и WASM. Если сеть блокирует их все, цветовой детектор из раздела 2 продолжит работать.</p>
+ <p class="muted">Модель MediaPipe пытается найти суставы. Для водных видов спорта это эксперимент: распознавание может пропускать пловца, находить человека на бортике или путать руки с ногами. Результаты автоматически помечаются как <b>кандидаты</b>, не как подтверждённые гребки.</p>
+ <div class="flex"><label>Шаг анализа <select id="step"><option value="0.2">5 кадров/с</option><option value="0.125">8 кадров/с</option><option value="0.1">10 кадров/с</option></select></label><label>От <input id="from" type="number" min="0" step="0.1" value="7" style="width:70px"> с</label><label>До <input id="to" type="number" min="0" step="0.1" value="36.6" style="width:80px"> с</label><label>Примерный поворот <input id="turnEstimate" type="number" min="0" step="0.1" value="20.5" style="width:80px"> с</label></div>
+ <div class="flex"><button id="analyze">Распознать позу и циклы</button><button id="cancel" class="secondary" disabled>Остановить</button></div>
+ <div id="status" class="status" role="status">Алгоритм ещё не запускался.</div><div class="bar"><div id="progress"></div></div>
+ <div class="stats" style="margin-top:11px"><div class="stat"><b id="coverage">—</b><span>Доля кадров с пригодной позой</span></div><div class="stat"><b id="candidateCount">—</b><span>Кандидаты на фазы цикла</span></div></div>
+ <h3>Сигнал рук и пропуски распознавания</h3><canvas id="plot" class="plot" width="920" height="260"></canvas>
+ <div class="legend"><span><i class="dot"></i> Вылет кистей относительно плеч</span><span><i class="dot orange"></i> Возможный цикл</span><span><i class="dot red"></i> Нет надёжной позы</span></div>
+ <p class="muted">Сигнал вычисляется относительно тела, чтобы уменьшить влияние движения камеры. Это не метрическое измерение скорости или длины гребка.</p>
+ <button class="secondary" id="saveSignal">Экспорт покадрового AI-анализа CSV</button>
+</section>
+<section>
+ <h2>4. Разметка событий и гребков</h2><div class="note caution">Только подтверждённые вручную события попадают в итоговую частоту. Кандидаты модели не прибавляются к количеству автоматически.</div>
+ <div class="flex"><label>Событие <select id="event"><option value="stroke">Начало дистанционного цикла</option><option value="motion_start">Первое движение (чистый старт)</option><option value="toe_off">Отрыв ног от тумбы</option><option value="start_signal">Звук старта / свисток (если был)</option><option value="turn_touch">Касание поворота</option><option value="turn_push">Отталкивание после поворота</option><option value="breakout_1">Выход 1</option><option value="breakout_2">Выход 2</option><option value="finish">Финишное касание</option></select></label><label>Отрезок <select id="lap"><option value="1">Первый 25 м</option><option value="2">Второй 25 м</option></select></label></div>
+ <div class="flex"><button id="mark">+ Подтвердить событие на текущем кадре</button><button id="undo" class="secondary">Отменить последнюю</button></div>
+ <h3>Подозреваемые события (требуют проверки)</h3><div id="candidates" class="list"><p class="muted">Запусти AI-анализ, чтобы получить кандидатов.</p></div>
+ <h3>Проверенная разметка</h3><div class="list"><table><thead><tr><th>Видео, с</th><th>Событие</th><th>25 м</th><th></th></tr></thead><tbody id="marks"></tbody></table></div>
+</section>
+<section><h2>5. Подтверждённые показатели</h2>
+ <div class="note" id="timingExplanation"><b>Чистое время:</b> от первого движения до финишного касания. Отрыв ног фиксируется отдельно. <b>Реакция</b> считается только при отметке стартового сигнала/свистка; на самостоятельном старте оставь её пустой.</div>
+ <h3>Чистый секундомер и средняя скорость</h3>
+ <div class="stats"><div class="stat"><b id="cleanTotal">—</b><span>Чистое время 50 м (от первого движения)</span></div><div class="stat"><b id="cleanSpeed">—</b><span>Средняя скорость 50 м, м/с</span></div><div class="stat"><b id="toeDelay">—</b><span>От первого движения до отрыва ног</span></div><div class="stat"><b id="reaction">—</b><span>Видео-реакция на сигнал (если был)</span></div><div class="stat"><b id="speed1">—</b><span>Средняя скорость 1-х 25 м, м/с</span></div><div class="stat"><b id="speed2">—</b><span>Средняя скорость 2-х 25 м, м/с</span></div></div>
+ <div class="status" id="timingWarning" role="status">Отметь первое движение, касание 25 м и касание 50 м.</div>
+ <h3>Подтверждённые циклы и сплиты</h3>
+ <div class="stats"><div class="stat"><b id="lap1">0</b><span>Циклов на 1-м 25 м</span></div><div class="stat"><b id="lap2">0</b><span>Циклов на 2-м 25 м</span></div><div class="stat"><b id="rate1">—</b><span>Средний темп на 1-м 25 м</span></div><div class="stat"><b id="rate2">—</b><span>Средний темп на 2-м 25 м</span></div><div class="stat"><b id="split1">—</b><span>Первый сплит</span></div><div class="stat"><b id="split2">—</b><span>Второй сплит</span></div></div>
+ <p class="muted">Темп вычисляется как 60 / средний интервал между отмеченными началами циклов одного 25-метрового отрезка. Первый сплит отсчитывается от первого движения до касания на повороте; второй — от касания поворота до финиша. Средняя скорость = 25 м / время сплита; это не мгновенная скорость. Для самостоятельного старта реакция не отображается.</p>
+ <div class="flex"><button id="exportJson">Сохранить отчёт JSON</button><button class="secondary" id="exportCsv">Отметки CSV</button><button id="reset" class="warn">Сброс</button></div>
+</section>
+<section><h2>Ограничения</h2><p class="muted">Позы могут не определяться под водой и в перспективе дальней стенки. Выбранные критерии событий — эвристика, а не валидированная спортивная методика. Без калибровки бассейна и достоверной траектории пловца не вычисляются скорость по метрам, длина гребка и дистанция выхода. Значение «—» означает, что показателя пока нет; это лучше, чем неверная цифра.</p><p class="muted">Библиотека: Google MediaPipe Pose Landmarker (загрузка по CDN). Если MediaPipe недоступен, локальный цветовой детектор продолжает работать. Тестирование производительности и точности на Safari необходимо.</p></section>
+<script type="module">
+const $=id=>document.getElementById(id),v=$('video');
+const names={stroke:'Цикл рук',motion_start:'Первое движение',toe_off:'Отрыв ног',start_signal:'Стартовый сигнал / свисток',start:'Отрыв ног (старый формат)',turn_touch:'Касание поворота',turn_push:'Отталкивание',breakout_1:'Выход 1',breakout_2:'Выход 2',finish:'Финиш'};
+const MODEL='https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
+const WASM='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm';
+let fileUrl=null,landmarker=null,cancelled=false,busy=false,series=[],candidates=[],marks=[],currentPose=null,modelVersion='@mediapipe/tasks-vision@0.10.22';
+const state=()=>({version:'rhythm-lab-v0.7',timing_definition:'clean_from_first_visible_motion',timing:calculateTiming(),model:modelVersion,modelAsset:MODEL,frame_interval_s:Number($('step').value),turn_estimate_s:Number($('turnEstimate').value),events:marks.slice().sort((a,b)=>a.time-b.time),candidates:candidates.map(c=>({time:c.time,lap:c.lap,status:c.status,signal:c.value})),poseSamples:series});
+function setStatus(s){$('status').textContent=s}function at(){return Number(v.currentTime)||0}
+function sync(){$('clock').textContent=at().toFixed(3);$('duration').textContent=v.duration?v.duration.toFixed(2)+' c':'—';$('seek').value=v.duration?1000*at()/v.duration:0;let begin=eventAt('motion_start');$('liveClean').textContent=begin!=null&&at()>=begin?(at()-begin).toFixed(3)+' с':'—';drawOverlay()}
+function down(filename,text,mime){let blob=new Blob([text],{type:mime}),u=URL.createObjectURL(blob),a=document.createElement('a');a.download=filename;a.href=u;a.click();setTimeout(()=>URL.revokeObjectURL(u),3000)}
+function csvEscape(x){let s=String(x??'');return /[,\n"]/.test(s)?'"'+s.replaceAll('"','""')+'"':s}
+$('videoFile').addEventListener('change',e=>{let f=e.target.files?.[0];if(!f)return;cancelled=true;if(fileUrl)URL.revokeObjectURL(fileUrl);fileUrl=URL.createObjectURL(f);v.src=fileUrl;v.load();$('videoMsg').textContent=`Выбран: ${f.name} (${(f.size/1048576).toFixed(1)} МБ)`;series=[];candidates=[];marks=[];currentPose=null;render();drawPlot()});
+v.addEventListener('timeupdate',sync);v.addEventListener('seeked',sync);v.addEventListener('loadedmetadata',()=>{$('to').value=Math.max(0,v.duration-.25).toFixed(2);sync()});
+$('seek').oninput=()=>{if(v.duration&&!busy)v.currentTime=Number($('seek').value)*v.duration/1000};
+$('prev').onclick=()=>{v.pause();if(!busy)v.currentTime=Math.max(0,at()-1/Number($('fps').value))};
+$('next').onclick=()=>{v.pause();if(!busy)v.currentTime=Math.min(v.duration||0,at()+1/Number($('fps').value))};
+$('slow').onclick=()=>{v.playbackRate=v.playbackRate===.25?1:.25;$('slow').textContent=v.playbackRate+'×'};
+function eventAt(type){let ss=marks.filter(m=>m.type===type).sort((a,b)=>a.time-b.time);return ss.length?ss[0].time:null}
+// All times refer to the uploaded video's timeline, not wall-clock time.
+// Motion start, toe-off and audible signal are independent events.
+function calculateTiming(){
+ const motion=eventAt('motion_start'),toe=eventAt('toe_off'),signal=eventAt('start_signal'),turn=eventAt('turn_touch'),finish=eventAt('finish');
+ const delta=(a,b)=>a!=null&&b!=null&&b>=a?b-a:null;
+ const split1=delta(motion,turn),split2=delta(turn,finish),clean=delta(motion,finish);
+ const reaction=delta(signal,motion),toeDelay=delta(motion,toe);
+ const warnings=[];
+ if(motion==null)warnings.push('Нужно отметить первое движение — начало чистого времени.');
+ if(turn==null)warnings.push('Нужно отметить касание на 25 м.');
+ if(finish==null)warnings.push('Нужно отметить касание на 50 м.');
+ if(signal!=null&&motion!=null&&signal>motion)warnings.push('Стартовый сигнал отмечен позже первого движения: проверь кадры.');
+ if(toe!=null&&motion!=null&&toe<motion)warnings.push('Отрыв ног отмечен раньше первого движения: проверь кадры.');
+ if(turn!=null&&motion!=null&&turn<=motion)warnings.push('Касание поворота не может быть раньше начала движения.');
+ if(finish!=null&&turn!=null&&finish<=turn)warnings.push('Финишное касание должно быть позже касания поворота.');
+ return {motion_start_s:motion,toe_off_s:toe,start_signal_s:signal,turn_touch_s:turn,finish_s:finish,clean_50m_s:clean,split_25m_1_s:split1,split_25m_2_s:split2,toe_off_after_motion_s:toeDelay,video_reaction_s:reaction,mean_speed_50m_mps:clean>0?50/clean:null,mean_speed_25m_1_mps:split1>0?25/split1:null,mean_speed_25m_2_mps:split2>0?25/split2:null,warnings};
+}
+function showMetric(id,val,units,precision=2){$(id).textContent=val!=null&&Number.isFinite(val)?val.toFixed(precision)+units:'—'}
+function render(){let body=$('marks');body.innerHTML='';marks.map((m,i)=>({...m,index:i})).sort((a,b)=>a.time-b.time).forEach(m=>{let tr=document.createElement('tr');for(let str of [m.time.toFixed(3),names[m.type],String(m.lap)]){let td=document.createElement('td');td.textContent=str;tr.appendChild(td)}let td=document.createElement('td'),b=document.createElement('button');b.textContent='×';b.className='small secondary';b.onclick=()=>{marks.splice(m.index,1);render()};td.appendChild(b);tr.appendChild(td);body.appendChild(tr)});
+ for(let lap of [1,2]){let list=marks.filter(m=>m.type==='stroke'&&m.lap===lap).sort((a,b)=>a.time-b.time);$('lap'+lap).textContent=list.length;let dt=list.length>1?list.at(-1).time-list[0].time:0;$('rate'+lap).textContent=dt>.25?(60*(list.length-1)/dt).toFixed(1)+' /мин':'—'}
+ let m=calculateTiming();showMetric('cleanTotal',m.clean_50m_s,' с',3);showMetric('cleanSpeed',m.mean_speed_50m_mps,' м/с');showMetric('toeDelay',m.toe_off_after_motion_s,' с',3);showMetric('reaction',m.video_reaction_s,' с',3);showMetric('speed1',m.mean_speed_25m_1_mps,' м/с');showMetric('speed2',m.mean_speed_25m_2_mps,' м/с');showMetric('split1',m.split_25m_1_s,' с',3);showMetric('split2',m.split_25m_2_s,' с',3);$('timingWarning').textContent=m.warnings.length?m.warnings.join('\n'):'Готово: чистое время и сплиты рассчитаны по подтверждённым отметкам.';sync();drawCandidates()}
+function addMark(type,lap,time){if(!v.src){setStatus('Сначала загрузи видео');return}if(type!=='stroke')marks=marks.filter(m=>m.type!==type);marks.push({time:Number(time.toFixed(4)),type,lap,source:'manual_confirmation'});render()}
+for(const b of document.querySelectorAll('[data-quickmark]'))b.addEventListener('click',()=>{const type=b.dataset.quickmark,lap=type==='finish'?2:1;addMark(type,lap,at());setStatus('Отмечено: '+names[type]+' · '+at().toFixed(3)+' с')});
+$('mark').onclick=()=>addMark($('event').value,Number($('lap').value),at());
+$('undo').onclick=()=>{marks.pop();render()};$('reset').onclick=()=>{if(confirm('Удалить все отметки и результаты AI?')){marks=[];series=[];candidates=[];render();drawPlot();setStatus('Разметка очищена')}};
+$('exportJson').onclick=()=>down('move-to-analyze-pose-lab.json',JSON.stringify(state(),null,2),'application/json');
+$('exportCsv').onclick=()=>down('move-to-analyze-events.csv','time_s,event,lap,source\n'+marks.slice().sort((a,b)=>a.time-b.time).map(m=>[m.time,m.type,m.lap,m.source].map(csvEscape).join(',')).join('\n'),'text/csv');
+$('saveSignal').onclick=()=>down('move-to-analyze-pose-signal.csv','time_s,usable,quality,arm_reach,torso_x,torso_y\n'+series.map(s=>[s.time,+s.usable,s.quality??'',s.reach??'',s.x??'',s.y??''].map(csvEscape).join(',')).join('\n'),'text/csv');
+function drawCandidates(){let root=$('candidates');root.innerHTML='';if(!candidates.length){let p=document.createElement('p');p.className='muted';p.textContent='Пока кандидатов нет. Отсутствие кандидатов не означает отсутствие гребков.';root.appendChild(p);return}
+ candidates.forEach((c,i)=>{let r=document.createElement('div');r.className='flex';r.style='border-bottom:1px solid var(--line);padding:9px 0';let label=document.createElement('span');label.className='muted';label.style='min-width:115px';label.textContent=`${c.time.toFixed(2)} c · ${c.lap}×25 м`;
+ let jump=document.createElement('button');jump.className='secondary small';jump.textContent='К кадру';jump.onclick=()=>{if(!v.src)return;v.pause();v.currentTime=c.time;$('lap').value=String(c.lap);window.scrollTo({top:0,behavior:'smooth'})};
+ let yes=document.createElement('button');yes.className='small';yes.textContent=c.status==='confirmed'?'✓ Отмечен':'✓ Гребок';yes.disabled=c.status==='confirmed';yes.onclick=()=>{c.status='confirmed';addMark('stroke',c.lap,c.time)};
+ let no=document.createElement('button');no.className='secondary small';no.textContent=c.status==='rejected'?'× Отклонён':'× Ошибка';no.onclick=()=>{c.status='rejected';render()};
+ r.append(label,jump,yes,no);root.appendChild(r)})}
+function drawOverlay(){const c=$('overlay'),rect=v.getBoundingClientRect();let sw=Math.max(1,Math.round(rect.width)),sh=Math.max(1,Math.round(rect.height));if(c.width!==sw||c.height!==sh){c.width=sw;c.height=sh}let g=c.getContext('2d');g.clearRect(0,0,sw,sh);if(!series.length||!v.videoWidth)return;let idx=nearestIndex(series,at());if(idx<0||Math.abs(series[idx].time-at())>.14)return;let s=series[idx];if(!s.usable||!s.landmarks)return;
+ const ratio=Math.min(sw/v.videoWidth,sh/v.videoHeight),iw=ratio*v.videoWidth,ih=ratio*v.videoHeight,ox=(sw-iw)/2,oy=(sh-ih)/2;
+ let ids=[[11,13],[13,15],[12,14],[14,16],[11,12],[11,23],[12,24],[23,24]];g.strokeStyle='#55e3c8';g.lineWidth=2;for(let [a,b] of ids){let p=s.landmarks[a],q=s.landmarks[b];if(!p||!q||(p.visibility??1)<.45||(q.visibility??1)<.45)continue;g.beginPath();g.moveTo(ox+p.x*iw,oy+p.y*ih);g.lineTo(ox+q.x*iw,oy+q.y*ih);g.stroke()}for(let j of [11,12,13,14,15,16,23,24]){let p=s.landmarks[j];if(!p||(p.visibility??1)<.45)continue;g.fillStyle='#fff';g.beginPath();g.arc(ox+p.x*iw,oy+p.y*ih,2.8,0,Math.PI*2);g.fill()}}
+function nearestIndex(a,t){let lo=0,hi=a.length;while(lo<hi){let md=(lo+hi)>>1;if(a[md].time<t)lo=md+1;else hi=md}return lo===a.length?a.length-1:lo===0?0:Math.abs(a[lo].time-t)<Math.abs(a[lo-1].time-t)?lo:lo-1}
+function drawPlot(){let c=$('plot'),g=c.getContext('2d'),W=c.width,H=c.height;g.clearRect(0,0,W,H);g.fillStyle='#081f30';g.fillRect(0,0,W,H);g.strokeStyle='#36566a';g.strokeRect(38,12,W-55,H-42);if(!series.length){g.fillStyle='#a8bfcb';g.font='17px system-ui';g.fillText('Нажми «Распознать позу и циклы»',58,75);return}let lo=series[0].time,hi=series.at(-1).time||lo+1,valid=series.filter(x=>x.usable),ys=valid.map(x=>x.reach),min=Math.min(...ys,0),max=Math.max(...ys,1),rg=Math.max(.5,max-min);const sx=t=>38+(t-lo)/(hi-lo)*(W-55),sy=y=>H-30-(y-min)/rg*(H-42);
+ g.fillStyle='rgba(255,90,105,.12)';for(let p of series.filter(s=>!s.usable)){let x=sx(p.time);g.fillRect(x-2,13,4,H-44)}
+ g.strokeStyle='#55e3c8';g.lineWidth=2;g.beginPath();let pen=false;for(let s of series){if(!s.usable){pen=false;continue}let x=sx(s.time),y=sy(s.reach);if(!pen){g.moveTo(x,y);pen=true}else g.lineTo(x,y)}g.stroke();for(let p of candidates){let x=sx(p.time),y=sy(p.value);g.strokeStyle='#ffa970';g.lineWidth=2;g.beginPath();g.moveTo(x,y-8);g.lineTo(x,y+8);g.moveTo(x-5,y);g.lineTo(x+5,y);g.stroke()}
+ g.fillStyle='#a8bfcb';g.font='14px system-ui';g.fillText(lo.toFixed(1)+' c',39,H-8);g.fillText(hi.toFixed(1)+' c',W-67,H-8);g.fillText('нормализованный вылет кистей',46,28)}
+// Use the distribution's pre-built ES module rather than jsDelivr's generated +esm endpoint.
+// Multiple CDNs are intentional: privacy filters and networks sometimes block just one host.
+const MEDIAPIPE_SOURCES = [
+ {name:'unpkg',module:'https://unpkg.com/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs',wasm:'https://unpkg.com/@mediapipe/tasks-vision@0.10.22/wasm'},
+ {name:'jsDelivr',module:'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs',wasm:'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm'},
+ {name:'esm.sh',module:'https://esm.sh/@mediapipe/tasks-vision@0.10.22?bundle',wasm:'https://unpkg.com/@mediapipe/tasks-vision@0.10.22/wasm'}
+];
+async function readyPose(){
+ if(landmarker)return landmarker;
+ const failures=[];
+ for(const source of MEDIAPIPE_SOURCES){
+  let api;
+  try{
+   setStatus(`Загрузка MediaPipe: библиотека через ${source.name}…`);
+   api=await import(/* @vite-ignore */ source.module);
+   if(!api.PoseLandmarker||!api.FilesetResolver)throw new Error('Нет необходимых экспортов PoseLandmarker / FilesetResolver');
+  }catch(error){
+   failures.push(`${source.name} JS: ${error?.message||String(error)}`);
+   continue;
+  }
+  const wasmOptions=[source.wasm, ...MEDIAPIPE_SOURCES.map(s=>s.wasm)].filter((x,i,a)=>a.indexOf(x)===i);
+  for(const wasmUrl of wasmOptions){
+   try{
+    setStatus(`MediaPipe загружен (${source.name}). Инициализация модели и WASM (${new URL(wasmUrl).hostname})…`);
+    const files=await api.FilesetResolver.forVisionTasks(wasmUrl);
+    landmarker=await api.PoseLandmarker.createFromOptions(files,{
+     baseOptions:{modelAssetPath:MODEL,delegate:'CPU'},runningMode:'VIDEO',numPoses:2,
+     minPoseDetectionConfidence:.45,minPosePresenceConfidence:.45,minTrackingConfidence:.45
+    });
+    modelVersion='@mediapipe/tasks-vision@0.10.22 ('+source.name+')';
+    return landmarker;
+   }catch(error){failures.push(`${source.name} + ${new URL(wasmUrl).hostname}: ${error?.message||String(error)}`)}
+  }
+ }
+ const detail=failures.slice(0,6).join(' | ');
+ throw new Error('Не удалось получить MediaPipe из нескольких CDN. Это проблема загрузки библиотеки/WASM/модели, а НЕ анализа пловца. Проверь доступ к unpkg.com, cdn.jsdelivr.net, esm.sh и storage.googleapis.com (VPN, AdBlock, корпоративный фильтр). Локальный анализ ритма в разделе 2 работает без них. Технические детали: '+detail);
+}
+function average(a,b){return {x:(a.x+b.x)/2,y:(a.y+b.y)/2}}
+function measure(poses){let options=[];for(let lm of poses||[]){if(!lm||lm.length<25)continue;let needed=[11,12,15,16,23,24],qual=Math.min(...needed.map(i=>lm[i]?.visibility??0));if(qual<.52)continue;let sh=average(lm[11],lm[12]),hip=average(lm[23],lm[24]);let body=Math.hypot(sh.x-hip.x,sh.y-hip.y);if(body<.045||body>.75||sh.y<.32||sh.y>.88||hip.y<.30||hip.y>.92)continue;
+ let wr=average(lm[15],lm[16]);let dx=(sh.x-hip.x)/body,dy=(sh.y-hip.y)/body,project=((wr.x-sh.x)*dx+(wr.y-sh.y)*dy)/body;
+ let wrDistance=Math.hypot(wr.x-sh.x,wr.y-sh.y)/body;
+ // Motion can be distorted by swimming perspective; track both signals for audit.
+ let waterPenalty=(Math.abs(sh.x-hip.x)<Math.abs(sh.y-hip.y)*.65)?0.20:0;let score=qual-waterPenalty;
+ options.push({usable:score>.28,quality:Number(score.toFixed(3)),reach:Number(project.toFixed(4)),wrist_distance:Number(wrDistance.toFixed(4)),x:sh.x,y:sh.y,landmarks:lm.map(z=>({x:z.x,y:z.y,visibility:z.visibility}))})}
+ options.sort((a,b)=>b.quality-a.quality);return options[0]||{usable:false,quality:0,reach:null,x:null,y:null,landmarks:null}}
+function candidatesFromSeries(ss){let good=ss.filter(s=>s.usable&&Number.isFinite(s.reach));if(good.length<8)return[];
+ let range=good.map(s=>s.reach).sort((a,b)=>a-b),low=range[Math.floor(range.length*.1)],high=range[Math.floor(range.length*.9)],amp=high-low;
+ if(amp<.35)return[];let result=[];let smooth=ss.map((s,i)=>{if(!s.usable)return null;let tmp=ss.slice(Math.max(0,i-2),Math.min(ss.length,i+3)).filter(z=>z.usable&&Math.abs(z.time-s.time)<.55);return tmp.length>=3?tmp.reduce((a,b)=>a+b.reach,0)/tmp.length:null});
+ for(let i=2;i<ss.length-2;i++){
+  if(smooth[i]==null||smooth[i-1]==null||smooth[i+1]==null)continue;
+  // A local trough corresponds to hands drawing back toward the torso.
+  if(!(smooth[i]<=smooth[i-1]&&smooth[i]<smooth[i+1]))continue;
+  let near=ss.slice(Math.max(i-7,0),Math.min(i+8,ss.length)),usable=near.filter(z=>z.usable).length/near.length;
+  if(usable<.6)continue;
+  let winLeft=smooth.slice(Math.max(0,i-8),i).filter(x=>x!=null),winRight=smooth.slice(i+1,Math.min(smooth.length,i+9)).filter(x=>x!=null);
+  if(!winLeft.length||!winRight.length)continue;
+  let prominence=Math.min(Math.max(...winLeft)-smooth[i],Math.max(...winRight)-smooth[i]);if(prominence<Math.max(.20,amp*.20))continue;
+  let t=ss[i].time;if(result.length&&t-result.at(-1).time<.75){if(prominence>result.at(-1).prominence){result.at(-1)={time:t,value:ss[i].reach,lap:t<Number($('turnEstimate').value)?1:2,prominence,status:'unverified'}}continue}
+  result.push({time:t,value:ss[i].reach,lap:t<Number($('turnEstimate').value)?1:2,prominence,status:'unverified'})
+ }
+ return result.filter(z=>z.time>=8&&z.time<=35.5)}
+async function seekTo(target){if(Math.abs(v.currentTime-target)<.006)return;return new Promise((resolve,reject)=>{let done=false;let timeout=setTimeout(()=>finish(new Error('Не удалось перейти к кадру')),9000);function finish(err){if(done)return;done=true;clearTimeout(timeout);v.removeEventListener('seeked',ok);v.removeEventListener('error',bad);err?reject(err):resolve()};function ok(){finish()};function bad(){finish(new Error('Ошибка декодирования видео'))}v.addEventListener('seeked',ok,{once:true});v.addEventListener('error',bad,{once:true});v.currentTime=target})}
+$('cancel').onclick=()=>{cancelled=true;setStatus('Останавливаю после текущего кадра…')};
+$('analyze').onclick=async()=>{if(busy)return;if(!v.src||!Number.isFinite(v.duration)){setStatus('Сначала загрузи исходное видео');return}let start=Math.max(0,Number($('from').value)),end=Math.min(v.duration-.04,Number($('to').value)),step=Number($('step').value);if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start||!Number.isFinite(step)){setStatus('Некорректный диапазон');return}
+ busy=true;cancelled=false;$('analyze').disabled=true;$('cancel').disabled=false;v.pause();let prior=at(),observations=[];
+ try{let model=await readyPose();let count=Math.floor((end-start)/step)+1;setStatus('Анализирую видео. Не закрывай вкладку. Движение времени в плеере во время анализа — нормально.');
+  for(let i=0;i<count;i++){
+   if(cancelled)break;
+   let t=Math.min(end,start+i*step);await seekTo(t);
+   // Allow Safari to present the decoded seek target before inference.
+   await new Promise(r=>requestAnimationFrame(()=>r()));
+   let pose=model.detectForVideo(v,Math.round(t*1000));let chosen=measure(pose.landmarks);
+   observations.push({time:Number(t.toFixed(3)),...chosen});
+   if(i%5===0||i===count-1){$('progress').style.width=(100*(i+1)/count).toFixed(2)+'%';setStatus(`Обработано: ${i+1}/${count} кадров (${Math.round(100*(i+1)/count)}%). Пригодных поз: ${observations.filter(x=>x.usable).length}.`);await new Promise(r=>setTimeout(r,0))}
+  }
+  series=observations;candidates=candidatesFromSeries(series);let percent=series.length?100*series.filter(x=>x.usable).length/series.length:0;$('coverage').textContent=percent.toFixed(0)+'%';$('candidateCount').textContent=candidates.length;
+  let message=cancelled?'Анализ прерван. ': 'Анализ завершён. ';
+  message+=`Пригодные позы: ${series.filter(x=>x.usable).length}/${series.length} (${percent.toFixed(0)}%). Кандидаты фаз: ${candidates.length}. `;
+  message+=percent<60?'Охват низкий: автоматический подсчёт гребков по этому видео ненадёжен.': 'Проверь кандидатов по кадрам: счёт гребков пока НЕ подтверждён.';
+  setStatus(message);drawPlot();render();
+ }catch(err){setStatus('AI-анализ не запущен/прерван: '+(err?.message||String(err))+'\nПроверь интернет; при необходимости используй ручные отметки.')}
+ finally{busy=false;$('analyze').disabled=false;$('cancel').disabled=true;try{await seekTo(Math.min(prior,v.duration-.05))}catch(e){}sync()}}
+
+// v0.6: Offline colour-based body-rise candidate detector.
+// This module does NOT classify a stroke and only observes the configured windows.
+let breathSeries=[],breathCandidates=[],colorCancelled=false,colorBusy=false;
+const breathReference=[{time:12.25,lap:1},{time:13.75,lap:1},{time:15.50,lap:1},{time:26.95,lap:2},{time:28.45,lap:2},{time:30.05,lap:2},{time:31.55,lap:2},{time:33.05,lap:2},{time:34.80,lap:2},{time:36.30,lap:2}];
+function skinWaterSignal(frame,roi){
+ const W=frame.width,H=frame.height,pixels=frame.data,n=W*H,skin=new Uint8Array(n),pool=new Uint8Array(n);
+ for(let i=0,j=0;i<n;i++,j+=4){let R=pixels[j],G=pixels[j+1],B=pixels[j+2],max=Math.max(R,G,B),min=Math.min(R,G,B),delta=max-min;
+  let h=0;if(delta){if(max===R)h=60*(((G-B)/delta)%6);else if(max===G)h=60*((B-R)/delta+2);else h=60*((R-G)/delta+4)}if(h<0)h+=360;h/=2;
+  let sat=max?255*delta/max:0,Y=.299*R+.587*G+.114*B,Cr=(R-Y)*.713+128,Cb=(B-Y)*.564+128;
+  if(Y>=55&&Y<=245&&Cr>=132&&Cr<=180&&Cb>=77&&Cb<=133&&h<=20&&sat>=28&&max>=35)skin[i]=1;
+  if(h>=65&&h<=115&&sat>=25&&max>=20)pool[i]=1;
+ }
+ const S=W+1,integ=new Int32Array((W+1)*(H+1));for(let y=0;y<H;y++){let sum=0;for(let x=0;x<W;x++){sum+=pool[y*W+x];integ[(y+1)*S+x+1]=integ[y*S+x+1]+sum}}
+ const x1=Math.max(0,Math.min(W-1,Math.round(roi[0]*W))),x2=Math.max(x1+1,Math.min(W,Math.round(roi[2]*W)));
+ const y1=Math.max(0,Math.min(H-1,Math.round(roi[1]*H))),y2=Math.max(y1+1,Math.min(H,Math.round(roi[3]*H)));
+ let count=0;for(let y=y1;y<y2;y++)for(let x=x1;x<x2;x++){if(!skin[y*W+x])continue;
+  let xa=Math.max(0,x-16),xb=Math.min(W,x+17),ya=Math.max(0,y-16),yb=Math.min(H,y+17);
+  let amount=integ[yb*S+xb]-integ[ya*S+xb]-integ[yb*S+xa]+integ[ya*S+xa];
+  if(amount/((xb-xa)*(yb-ya))>.22)count++
+ }return count
+}
+function temporalSmooth(values,step){let sigma=Math.max(.9,.133/step);let rad=Math.max(2,Math.ceil(sigma*3));return values.map((v,i)=>{let acc=0,weight=0;for(let k=-rad;k<=rad;k++){if(i+k<0||i+k>=values.length)continue;let z=Math.exp(-.5*k*k/(sigma*sigma));weight+=z;acc+=z*values[i+k]}return acc/weight})}
+function localBreathPeaks(seq,lap,step,prominence){let smooth=temporalSmooth(seq.map(x=>x.value),step);let out=[],sep=Math.max(1,Math.floor(.95/step));
+ for(let i=2;i<smooth.length-2;i++){let p=smooth[i];if(!(p>smooth[i-1]&&p>=smooth[i+1]))continue;
+  const radius=Math.min(smooth.length-1,Math.ceil(2/step));let left=Math.min(...smooth.slice(Math.max(0,i-radius),i)),right=Math.min(...smooth.slice(i+1,Math.min(smooth.length,i+radius+1)));
+  let prom=Math.min(p-left,p-right);if(prom<prominence)continue;
+  if(out.length&&i-out.at(-1).index<sep){if(prom>out.at(-1).prominence)out[out.length-1]={index:i,time:seq[i].time,lap,value:p,prominence:prom,status:'unverified'};continue}
+  out.push({index:i,time:seq[i].time,lap,value:p,prominence:prom,status:'unverified'})
+ }return out}
+function compareBreathingPreds(pp){let matched=new Set(),hits=0;for(let p of pp){let arr=breathReference.map((r,i)=>({err:Math.abs(r.time-p.time),i,lap:r.lap})).filter(x=>x.lap===p.lap&&!matched.has(x.i)&&x.err<=.35).sort((a,b)=>a.err-b.err);if(arr.length){matched.add(arr[0].i);hits++}}
+ return {matched:hits,ref:breathReference.length,preds:pp.length,precision:pp.length?hits/pp.length:0,recall:hits/breathReference.length}}
+function drawBreathPlot(){let c=$('breathPlot'),g=c.getContext('2d'),W=c.width,H=c.height;g.fillStyle='#081f30';g.fillRect(0,0,W,H);g.strokeStyle='#476074';g.strokeRect(42,12,W-55,H-42);
+ if(!breathSeries.length){g.font='16px system-ui';g.fillStyle='#a8bfcb';g.fillText('После анализа появится график подъёмов корпуса',53,70);return}
+ let tmin=breathSeries[0].time,tmax=breathSeries.at(-1).time,ymax=Math.max(200,...breathSeries.map(x=>x.value))*1.1;
+ const px=t=>42+(t-tmin)/(tmax-tmin||1)*(W-55),py=v=>H-31-(v/ymax)*(H-45);
+ for(let lap of [1,2]){let seq=breathSeries.filter(x=>x.lap===lap);g.strokeStyle=lap===1?'#55e3c8':'#ffa970';g.lineWidth=2;g.beginPath();seq.forEach((x,i)=>{if(i===0)g.moveTo(px(x.time),py(x.value));else g.lineTo(px(x.time),py(x.value))});g.stroke()}
+ for(let p of breathCandidates){let x=px(p.time),y=py(p.value);g.strokeStyle='#fff';g.beginPath();g.moveTo(x-5,y-5);g.lineTo(x+5,y+5);g.moveTo(x+5,y-5);g.lineTo(x-5,y+5);g.stroke()}
+ g.fillStyle='#afc9d7';g.font='14px system-ui';g.fillText(tmin.toFixed(1)+' c',42,H-8);g.fillText(tmax.toFixed(1)+' c',W-75,H-8);g.fillText('площадь открытой кожи рядом с водой (пиксели)',52,28)
+}
+function drawBreathRows(){let root=$('breathRows');root.innerHTML='';if(!breathCandidates.length){let p=document.createElement('p');p.className='muted';p.textContent='В выбранных окнах нет кандидатов.';root.append(p);return}
+ breathCandidates.forEach(c=>{let r=document.createElement('div');r.className='flex';r.style='border-bottom:1px solid var(--line);padding:8px 0';let label=document.createElement('span');label.textContent=`${c.time.toFixed(2)} с · ${c.lap}×25 м`;label.style='min-width:125px';let j=document.createElement('button');j.className='small secondary';j.textContent='▶ Видео';j.onclick=()=>{v.pause();v.currentTime=c.time;window.scrollTo({top:0,behavior:'smooth'})};let yes=document.createElement('button');yes.className='small';yes.textContent=c.status==='confirmed'?'✓ Отмечено':'✓ Цикл';yes.disabled=c.status==='confirmed';yes.onclick=()=>{c.status='confirmed';addMark('stroke',c.lap,c.time);drawBreathRows()};let no=document.createElement('button');no.className='small secondary';no.textContent=c.status==='rejected'?'Отклонено':'× Не цикл';no.onclick=()=>{c.status='rejected';drawBreathRows()};r.append(label,j,yes,no);root.append(r)})}
+$('colorCancel').onclick=()=>{colorCancelled=true;$('colorStatus').textContent='Остановлю на текущем кадре…'};
+$('breathExport').onclick=()=>down('move-to-analyze-breath-v06.csv','video_time_s,lap,skin_signal\n'+breathSeries.map(r=>[r.time,r.lap,r.value].join(',')).join('\n'),'text/csv');
+$('colorAnalyze').onclick=async()=>{
+ if(colorBusy||busy)return;if(!v.src||!v.duration){$('colorStatus').textContent='Сначала выбери видео';return}
+ let windows=[[Number($('colorFrom1').value),Number($('colorTo1').value)],[Number($('colorFrom2').value),Number($('colorTo2').value)]],step=1/Number($('colorFPS').value),prom=Number($('colorProm').value);
+ let roi=['roiX1','roiY1','roiX2','roiY2'].map(id=>Number($(id).value)/100);
+ if(windows.some(w=>!(w[0]>=0&&w[1]>w[0]&&w[1]<v.duration))||roi.some(x=>!Number.isFinite(x))||roi[0]>=roi[2]||roi[1]>=roi[3]){$('colorStatus').textContent='Неверные границы времени или области';return}
+ breathCandidates=[];let old=at(),samples=[],all=[],frameCanvas=document.createElement('canvas');frameCanvas.width=424;frameCanvas.height=232;let ctx=frameCanvas.getContext('2d',{willReadFrequently:true});
+ colorCancelled=false;colorBusy=true;busy=true;v.pause();$('colorAnalyze').disabled=true;$('colorCancel').disabled=false;
+ let total=windows.reduce((a,w)=>a+Math.floor((w[1]-w[0])/step)+1,0),done=0;
+ try{
+  for(let lap=1;lap<=2;lap++){let [from,to]=windows[lap-1],windowSamples=[];
+   for(let t=from;t<=to+.00001;t+=step){if(colorCancelled)break;await seekTo(Math.min(t,v.duration-.05));await new Promise(r=>requestAnimationFrame(r));ctx.drawImage(v,0,0,424,232);
+    let val=skinWaterSignal(ctx.getImageData(0,0,424,232),roi),item={time:Number(t.toFixed(3)),value:val,lap};windowSamples.push(item);all.push(item);done++;
+    if(done%5===0||done===total){$('colorProgress').style.width=(100*done/total).toFixed(1)+'%';$('colorStatus').textContent=`Анализ ${(100*done/total).toFixed(0)}% · ${done}/${total} кадров. Видео остаётся на устройстве.`;await new Promise(r=>setTimeout(r,0))}
+   }
+   if(windowSamples.length){let ss=temporalSmooth(windowSamples.map(x=>x.value),step);windowSamples.forEach((x,i)=>x.value=ss[i]);samples.push(...windowSamples);let found=localBreathPeaks(windowSamples,lap,step,prom);breathCandidates.push(...found)}
+   if(colorCancelled)break
+  }
+  breathSeries=samples;let matched=compareBreathingPreds(breathCandidates);$('breathCount').textContent=breathCandidates.length;for(let lap of [1,2]){let a=breathCandidates.filter(x=>x.lap===lap).sort((x,y)=>x.time-y.time);let dt=a.length>1?a.at(-1).time-a[0].time:0;$('autoRate'+lap).textContent=dt>.1?(60*(a.length-1)/dt).toFixed(1)+' /мин':'—'}
+  let originalTest=Math.abs(v.duration-36.83)<.22&&v.videoWidth===848&&v.videoHeight===464&&($('videoFile').files?.[0]?.name==='video_2026-10-23_09-04-57.mp4');
+  $('breathQuality').textContent=originalTest?`${matched.matched}/${matched.ref}`:'н/д';
+  $('colorStatus').textContent=(colorCancelled?'Остановлено. ':'Готово. ')+`Обнаружено ${breathCandidates.length} кандидатов. `+(originalTest?`В этом видео совпало ${matched.matched} из 10 визуальных ориентиров в пределах ±0,35 с. `:'Нет контрольной разметки для этого видео. ')+'Не превращай кандидатов в количество гребков без просмотра.';
+  drawBreathPlot();drawBreathRows();
+ }catch(err){$('colorStatus').textContent='Ошибка анализа: '+(err?.message||String(err))}finally{busy=false;colorBusy=false;$('colorAnalyze').disabled=false;$('colorCancel').disabled=true;try{await seekTo(Math.min(old,v.duration-.05))}catch(e){}sync()}
+};
+const originalReset=$('reset').onclick;$('reset').onclick=()=>{originalReset();breathSeries=[];breathCandidates=[];drawBreathPlot();drawBreathRows();$('breathCount').textContent='—';$('breathQuality').textContent='—';$('autoRate1').textContent='—';$('autoRate2').textContent='—'};
+const originalVideoLoad=$('videoFile').onchange;
+// The existing video selection listener clears manual marks, while this listener clears colour results.
+$('videoFile').addEventListener('change',()=>{breathSeries=[];breathCandidates=[];drawBreathPlot();drawBreathRows();$('breathCount').textContent='—';$('breathQuality').textContent='—';$('autoRate1').textContent='—';$('autoRate2').textContent='—'});
+drawBreathPlot();drawBreathRows();
+
+render();drawPlot();sync();
+</script>
+</body></html>
